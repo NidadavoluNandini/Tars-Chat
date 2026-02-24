@@ -106,22 +106,6 @@ export function ChatPanel({
     };
   }, [conversationId, setTyping]);
 
-  useEffect(() => {
-    const handleComposerEnter = (event: KeyboardEvent) => {
-      if (event.key !== "Enter" || event.shiftKey) {
-        return;
-      }
-
-      const activeElement = document.activeElement;
-      if (composerRef.current && activeElement && composerRef.current.contains(activeElement)) {
-        event.preventDefault();
-        void handleSend();
-      }
-    };
-
-    window.addEventListener("keydown", handleComposerEnter);
-    return () => window.removeEventListener("keydown", handleComposerEnter);
-  }, [handleSend]);
 
   const handleTyping = (value: string) => {
     setDraft(value);
@@ -193,7 +177,7 @@ export function ChatPanel({
     }
 
     const payload = (await response.json()) as { storageId: string };
-    return payload.storageId;
+    return payload.storageId as Id<"_storage">;
   };
 
   const handleSend = async () => {
@@ -238,6 +222,23 @@ export function ChatPanel({
       setIsUploading(false);
     }
   };
+
+  useEffect(() => {
+    const handleComposerEnter = (event: KeyboardEvent) => {
+      if (event.key !== "Enter" || event.shiftKey) {
+        return;
+      }
+
+      const activeElement = document.activeElement;
+      if (composerRef.current && activeElement && composerRef.current.contains(activeElement)) {
+        event.preventDefault();
+        void handleSend();
+      }
+    };
+
+    window.addEventListener("keydown", handleComposerEnter);
+    return () => window.removeEventListener("keydown", handleComposerEnter);
+  }, [handleSend]);
 
   if (conversation === undefined) {
     return (
@@ -505,7 +506,7 @@ export function ChatPanel({
                 key={`${file.name}-${file.size}`}
                 className="flex items-center gap-2 rounded-full border bg-background px-2 py-1 text-xs"
               >
-                <span className="max-w-[160px] truncate">{file.name}</span>
+                <span className="max-w-40 truncate">{file.name}</span>
                 <button
                   type="button"
                   className="rounded-full p-0.5 text-muted-foreground hover:text-foreground"
@@ -597,14 +598,15 @@ export function ChatPanel({
           type="file"
           multiple
           className="hidden"
+          aria-label="Attach files"
           onChange={(event) => handleFilesSelected(event.target.files)}
         />
         <input
           ref={imageInputRef}
           type="file"
           accept="image/*"
-          capture="environment"
           className="hidden"
+          aria-label="Attach photo"
           onChange={(event) => handleFilesSelected(event.target.files)}
         />
       </footer>
