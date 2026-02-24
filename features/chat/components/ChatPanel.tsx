@@ -2,7 +2,16 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery } from "convex/react";
-import { ArrowLeft, Camera, CornerDownLeft, Paperclip, Plus, Smile, Trash2, X } from "lucide-react";
+import {
+  ArrowLeft,
+  Camera,
+  CornerDownLeft,
+  Paperclip,
+  Plus,
+  Smile,
+  Trash2,
+  X,
+} from "lucide-react";
 import { api } from "@/convex/_generated/api";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -26,7 +35,9 @@ export function ChatPanel({
   onBack,
   isMobile = false,
 }: ChatPanelProps) {
-  const conversation = useQuery(api.conversations.getConversation, { conversationId });
+  const conversation = useQuery(api.conversations.getConversation, {
+    conversationId,
+  });
   const messages = useQuery(api.messages.listMessages, { conversationId });
   const typingUsers = useQuery(api.typing.getTypingUsers, { conversationId });
 
@@ -59,7 +70,8 @@ export function ChatPanel({
   ];
   const quickReactions = supportedReactions.slice(0, 4);
   const overflowReactions = supportedReactions.slice(4);
-  const [openReactionPickerId, setOpenReactionPickerId] = useState<string | null>(null);
+  const [openReactionPickerId, setOpenReactionPickerId] =
+    useState<string | null>(null);
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -106,7 +118,6 @@ export function ChatPanel({
     };
   }, [conversationId, setTyping]);
 
-
   const handleTyping = (value: string) => {
     setDraft(value);
 
@@ -149,7 +160,12 @@ export function ChatPanel({
     setPendingFiles((current) => {
       const next = [...current];
       Array.from(files).forEach((file) => {
-        if (!next.find((existing) => existing.name === file.name && existing.size === file.size)) {
+        if (
+          !next.find(
+            (existing) =>
+              existing.name === file.name && existing.size === file.size,
+          )
+        ) {
           next.push(file);
         }
       });
@@ -216,7 +232,9 @@ export function ChatPanel({
       scrollToBottom();
     } catch {
       setDraft(body);
-      setSendError("Message failed to send. Check your connection and retry.");
+      setSendError(
+        "Message failed to send. Check your connection and retry.",
+      );
       setFailedDraft(body);
     } finally {
       setIsUploading(false);
@@ -230,7 +248,11 @@ export function ChatPanel({
       }
 
       const activeElement = document.activeElement;
-      if (composerRef.current && activeElement && composerRef.current.contains(activeElement)) {
+      if (
+        composerRef.current &&
+        activeElement &&
+        composerRef.current.contains(activeElement)
+      ) {
         event.preventDefault();
         void handleSend();
       }
@@ -263,13 +285,18 @@ export function ChatPanel({
 
   const title = conversation.isGroup
     ? conversation.title ?? "Group"
-    : (conversation.otherMember?.name ?? "Conversation");
+    : conversation.otherMember?.name ?? "Conversation";
 
   return (
     <section className="relative flex h-full min-h-0 flex-1 flex-col bg-muted/20">
       <header className="shrink-0 flex items-center gap-2 border-b bg-card/95 p-3 backdrop-blur">
         {isMobile ? (
-          <Button size="icon" variant="ghost" onClick={onBack} aria-label="Back to conversations">
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={onBack}
+            aria-label="Back to conversations"
+          >
             <ArrowLeft className="h-4 w-4" />
           </Button>
         ) : null}
@@ -289,7 +316,9 @@ export function ChatPanel({
           <p className="text-xs text-muted-foreground">
             {conversation.isGroup
               ? `${conversation.groupOnlineCount}/${conversation.groupMembers.length} online`
-              : (conversation.otherMember?.isOnline ? "Online" : "Offline")}
+              : conversation.otherMember?.isOnline
+                ? "Online"
+                : "Offline"}
           </p>
         </div>
       </header>
@@ -297,7 +326,7 @@ export function ChatPanel({
       <div
         ref={containerRef}
         onScroll={onScroll}
-        className="flex-1 min-h-0 space-y-3 overflow-y-auto bg-[radial-gradient(circle_at_center,hsl(var(--muted))_0%,transparent_68%)] p-3 lg:p-4"
+        className="flex-1 min-h-0 space-y-3 overflow-y-auto bg-slate-50 p-3 lg:p-4"
       >
         {messages === undefined ? (
           <div className="space-y-3">
@@ -307,7 +336,8 @@ export function ChatPanel({
           </div>
         ) : safeMessages.length ? (
           safeMessages.map((message) => {
-            const isMine = String(message.senderId) === String(currentUserId);
+            const isMine =
+              String(message.senderId) === String(currentUserId);
             const senderName = message.sender?.name ?? "User";
 
             return (
@@ -318,11 +348,27 @@ export function ChatPanel({
                 <div
                   className={`rounded-2xl text-sm shadow-sm transition-all duration-200 hover:shadow ${
                     isMine
-                      ? "max-w-[68%] rounded-br-md bg-primary px-2.5 py-1.5 text-primary-foreground lg:max-w-[46%]"
-                      : "max-w-[88%] rounded-bl-md border bg-card px-3 py-2 lg:max-w-[72%]"
+                      ? [
+                          "max-w-[60%] lg:max-w-[40%]",
+                          "rounded-br-md",
+                          "bg-[#1A73E8]", // primary blue, like send button
+                          "px-3 py-1.5",
+                          "text-white",
+                        ].join(" ")
+                      : [
+                          "max-w-[70%] lg:max-w-[55%]",
+                          "rounded-bl-md",
+                          "bg-[#E3F2FF]", // light blue for others
+                          "px-3 py-1.5",
+                          "text-slate-900",
+                        ].join(" ")
                   }`}
                 >
-                  {!isMine ? <p className="mb-1 text-xs font-semibold">{senderName}</p> : null}
+                  {!isMine ? (
+                    <p className="mb-1 text-xs font-semibold text-slate-700">
+                      {senderName}
+                    </p>
+                  ) : null}
                   {message.deletedAt ? (
                     <p className="italic opacity-70">Message deleted</p>
                   ) : (
@@ -347,7 +393,9 @@ export function ChatPanel({
                       ) : null}
 
                       {message.body ? (
-                        <p className="whitespace-pre-wrap wrap-break-word">{message.body}</p>
+                        <p className="whitespace-pre-wrap wrap-break-word">
+                          {message.body}
+                        </p>
                       ) : null}
                     </>
                   )}
@@ -358,7 +406,9 @@ export function ChatPanel({
                     {isMine && !message.deletedAt ? (
                       <button
                         type="button"
-                        onClick={() => void softDeleteMessage({ messageId: message._id })}
+                        onClick={() =>
+                          void softDeleteMessage({ messageId: message._id })
+                        }
                         className="rounded p-0.5 opacity-70 transition hover:opacity-100"
                         aria-label="Delete message"
                       >
@@ -373,7 +423,12 @@ export function ChatPanel({
                         <button
                           key={`${message._id}-${emoji}-picker`}
                           type="button"
-                          onClick={() => void toggleReaction({ messageId: message._id, emoji })}
+                          onClick={() =>
+                            void toggleReaction({
+                              messageId: message._id,
+                              emoji,
+                            })
+                          }
                           className="rounded-full border px-1.5 py-0.5 text-xs transition hover:bg-muted"
                           aria-label={`React with ${emoji}`}
                         >
@@ -403,7 +458,10 @@ export function ChatPanel({
                                   key={`${message._id}-${emoji}-overflow`}
                                   type="button"
                                   onClick={() => {
-                                    void toggleReaction({ messageId: message._id, emoji });
+                                    void toggleReaction({
+                                      messageId: message._id,
+                                      emoji,
+                                    });
                                     setOpenReactionPickerId(null);
                                   }}
                                   className="rounded-md border px-1 py-1 text-xs transition hover:bg-muted"
@@ -570,7 +628,7 @@ export function ChatPanel({
           <Button
             onClick={() => void handleSend()}
             aria-label="Send message"
-            className="h-10 rounded-full px-3"
+            className="h-10 rounded-full px-3 bg-[#1A73E8] hover:bg-[#155BD0]"
             disabled={isUploading}
           >
             <CornerDownLeft className="h-4 w-4" />
