@@ -30,7 +30,7 @@ export function AuthScreen() {
           </SignInButton>
           <SignUpButton mode="modal">
             <Button variant="secondary" className="flex-1 shadow-sm">
-              Sign up
+              Sign Up
             </Button>
           </SignUpButton>
         </div>
