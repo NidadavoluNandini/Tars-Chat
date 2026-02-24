@@ -36,7 +36,7 @@ export function ConversationSidebar({
   onConversationSelect,
 }: ConversationSidebarProps) {
   return (
-    <aside className="flex h-full w-full flex-col border-r bg-background lg:w-90">
+    <aside className="flex h-full min-h-0 w-full flex-col border-r bg-background lg:w-90">
       <header className="flex items-center justify-between border-b bg-card/90 p-3 backdrop-blur">
         <div className="flex items-center gap-2">
           <Avatar className="h-8 w-8">
@@ -68,7 +68,7 @@ export function ConversationSidebar({
         </div>
       ) : null}
 
-      <div className="flex-1 overflow-y-auto p-2.5">
+      <div className="min-h-0 flex-1 overflow-y-auto p-2.5">
         <p className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Recent Chats
         </p>
