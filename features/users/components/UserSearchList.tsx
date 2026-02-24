@@ -22,15 +22,21 @@ export function UserSearchList({
   onUserSelect,
   onCreateGroup,
 }: UserSearchListProps) {
+  const hasSearch = Boolean(search.trim());
+
   return (
     <section className="space-y-3 border-b bg-card/70 p-3">
+      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        Start New Chat
+      </p>
+
       <div className="relative">
-        <Search className="pointer-events-none absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+        <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input
           value={search}
           onChange={(event) => onSearchChange(event.target.value)}
-          placeholder="Search users"
-          className="rounded-full border bg-background pl-8"
+          placeholder="Search users or chats"
+          className="rounded-full border bg-background pl-9 shadow-sm"
         />
       </div>
 
@@ -57,10 +63,12 @@ export function UserSearchList({
           <div className="rounded-md border border-dashed p-3 text-sm text-muted-foreground">
             <div className="mb-1 flex items-center gap-2">
               <UserRound className="h-4 w-4" />
-              No users found.
+              {hasSearch ? "No matching users." : "No users found."}
             </div>
             <p className="text-xs text-muted-foreground">
-              Create a second account (incognito window) so users can discover each other.
+              {hasSearch
+                ? "If this is an existing chat, check the conversation list below."
+                : "Create a second account (incognito window) so users can discover each other."}
             </p>
           </div>
         ) : null}

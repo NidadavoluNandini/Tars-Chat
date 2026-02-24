@@ -69,6 +69,10 @@ export function ConversationSidebar({
       ) : null}
 
       <div className="flex-1 overflow-y-auto p-2.5">
+        <p className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Recent Chats
+        </p>
+
         {conversations.length ? (
           <ul className="space-y-1">
             {conversations.map((conversation) => {

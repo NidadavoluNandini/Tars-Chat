@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery } from "convex/react";
-import { ArrowLeft, CornerDownLeft, Trash2 } from "lucide-react";
+import { ArrowLeft, Camera, CornerDownLeft, Paperclip, Plus, Smile, Trash2, X } from "lucide-react";
 import { api } from "@/convex/_generated/api";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -31,6 +31,8 @@ export function ChatPanel({
   const typingUsers = useQuery(api.typing.getTypingUsers, { conversationId });
 
   const sendMessage = useMutation(api.messages.sendMessage);
+  const sendFileMessage = useMutation(api.messages.sendFileMessage);
+  const generateUploadUrl = useMutation(api.messages.generateUploadUrl);
   const markConversationRead = useMutation(api.messages.markConversationRead);
   const setTyping = useMutation(api.typing.setTyping);
   const softDeleteMessage = useMutation(api.messages.softDeleteMessage);
@@ -41,7 +43,45 @@ export function ChatPanel({
   const [failedDraft, setFailedDraft] = useState<string | null>(null);
   const typingTimeoutRef = useRef<number | null>(null);
   const isTypingActiveRef = useRef(false);
-  const supportedReactions = ["👍", "❤️", "😂", "😮", "😢"];
+  const supportedReactions = [
+    "👍",
+    "❤️",
+    "😂",
+    "😮",
+    "😢",
+    "👏",
+    "🔥",
+    "😡",
+    "🙏",
+    "🎉",
+    "💯",
+    "🤝",
+  ];
+  const quickReactions = supportedReactions.slice(0, 4);
+  const overflowReactions = supportedReactions.slice(4);
+  const [openReactionPickerId, setOpenReactionPickerId] = useState<string | null>(null);
+  const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const imageInputRef = useRef<HTMLInputElement | null>(null);
+  const composerRef = useRef<HTMLDivElement | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const composerEmojis = [
+    "😀",
+    "😁",
+    "😂",
+    "🤣",
+    "😍",
+    "😘",
+    "😢",
+    "😡",
+    "👍",
+    "🙏",
+    "🔥",
+    "🎉",
+  ];
 
   const safeMessages = (messages ?? []) as MessageWithSender[];
   const { containerRef, onScroll, showNewMessagesButton, scrollToBottom } =
@@ -65,6 +105,23 @@ export function ChatPanel({
       }
     };
   }, [conversationId, setTyping]);
+
+  useEffect(() => {
+    const handleComposerEnter = (event: KeyboardEvent) => {
+      if (event.key !== "Enter" || event.shiftKey) {
+        return;
+      }
+
+      const activeElement = document.activeElement;
+      if (composerRef.current && activeElement && composerRef.current.contains(activeElement)) {
+        event.preventDefault();
+        void handleSend();
+      }
+    };
+
+    window.addEventListener("keydown", handleComposerEnter);
+    return () => window.removeEventListener("keydown", handleComposerEnter);
+  }, [handleSend]);
 
   const handleTyping = (value: string) => {
     setDraft(value);
@@ -95,20 +152,81 @@ export function ChatPanel({
     }, 2000);
   };
 
+  const handleAddEmoji = (emoji: string) => {
+    handleTyping(`${draft}${emoji}`);
+    setIsEmojiPickerOpen(false);
+    textareaRef.current?.focus();
+  };
+
+  const handleFilesSelected = (files: FileList | null) => {
+    if (!files?.length) {
+      return;
+    }
+    setPendingFiles((current) => {
+      const next = [...current];
+      Array.from(files).forEach((file) => {
+        if (!next.find((existing) => existing.name === file.name && existing.size === file.size)) {
+          next.push(file);
+        }
+      });
+      return next;
+    });
+    textareaRef.current?.focus();
+  };
+
+  const removePendingFile = (name: string, size: number) => {
+    setPendingFiles((current) =>
+      current.filter((file) => file.name !== name || file.size !== size),
+    );
+  };
+
+  const uploadFile = async (file: File) => {
+    const uploadUrl = await generateUploadUrl({});
+    const response = await fetch(uploadUrl, {
+      method: "POST",
+      headers: { "Content-Type": file.type || "application/octet-stream" },
+      body: file,
+    });
+
+    if (!response.ok) {
+      throw new Error("Upload failed.");
+    }
+
+    const payload = (await response.json()) as { storageId: string };
+    return payload.storageId;
+  };
+
   const handleSend = async () => {
-    if (!draft.trim()) {
+    if (!draft.trim() && pendingFiles.length === 0) {
       return;
     }
 
     const body = draft;
     setDraft("");
+    setIsUploading(true);
 
     try {
-      await sendMessage({ conversationId, body });
+      if (body.trim()) {
+        await sendMessage({ conversationId, body });
+      }
+
+      for (const file of pendingFiles) {
+        const storageId = await uploadFile(file);
+        await sendFileMessage({
+          conversationId,
+          storageId,
+          fileName: file.name,
+          fileType: file.type || "application/octet-stream",
+          fileSize: file.size,
+        });
+      }
+
       if (isTypingActiveRef.current) {
         await setTyping({ conversationId, isTyping: false });
         isTypingActiveRef.current = false;
       }
+
+      setPendingFiles([]);
       setSendError(null);
       setFailedDraft(null);
       scrollToBottom();
@@ -116,6 +234,8 @@ export function ChatPanel({
       setDraft(body);
       setSendError("Message failed to send. Check your connection and retry.");
       setFailedDraft(body);
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -205,7 +325,30 @@ export function ChatPanel({
                   {message.deletedAt ? (
                     <p className="italic opacity-70">Message deleted</p>
                   ) : (
-                      <p className="whitespace-pre-wrap wrap-break-word">{message.body}</p>
+                    <>
+                      {message.fileUrl ? (
+                        message.fileType?.startsWith("image/") ? (
+                          <img
+                            src={message.fileUrl}
+                            alt={message.fileName ?? "Attachment"}
+                            className="mb-2 max-h-64 rounded-lg border object-cover"
+                          />
+                        ) : (
+                          <a
+                            href={message.fileUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="mb-2 inline-flex items-center gap-2 rounded-md border bg-background/60 px-2 py-1 text-xs text-muted-foreground"
+                          >
+                            {message.fileName ?? "Attachment"}
+                          </a>
+                        )
+                      ) : null}
+
+                      {message.body ? (
+                        <p className="whitespace-pre-wrap wrap-break-word">{message.body}</p>
+                      ) : null}
+                    </>
                   )}
                   <div className="mt-1 flex items-center justify-end gap-1">
                     <span className="text-[10px] opacity-70">
@@ -225,7 +368,7 @@ export function ChatPanel({
 
                   {!message.deletedAt ? (
                     <div className="mt-2 flex flex-wrap items-center gap-1">
-                      {supportedReactions.map((emoji) => (
+                      {quickReactions.map((emoji) => (
                         <button
                           key={`${message._id}-${emoji}-picker`}
                           type="button"
@@ -236,6 +379,42 @@ export function ChatPanel({
                           {emoji}
                         </button>
                       ))}
+
+                      {overflowReactions.length ? (
+                        <div className="relative">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setOpenReactionPickerId((current) =>
+                                current === message._id ? null : message._id,
+                              )
+                            }
+                            className="rounded-full border px-2 py-0.5 text-xs opacity-70 transition hover:opacity-100"
+                            aria-label="More reactions"
+                          >
+                            <Plus className="h-3 w-3" />
+                          </button>
+
+                          {openReactionPickerId === message._id ? (
+                            <div className="absolute right-0 z-10 mt-1 grid w-32 grid-cols-4 gap-1 rounded-lg border bg-card p-2 shadow-lg">
+                              {overflowReactions.map((emoji) => (
+                                <button
+                                  key={`${message._id}-${emoji}-overflow`}
+                                  type="button"
+                                  onClick={() => {
+                                    void toggleReaction({ messageId: message._id, emoji });
+                                    setOpenReactionPickerId(null);
+                                  }}
+                                  className="rounded-md border px-1 py-1 text-xs hover:bg-muted"
+                                  aria-label={`React with ${emoji}`}
+                                >
+                                  {emoji}
+                                </button>
+                              ))}
+                            </div>
+                          ) : null}
+                        </div>
+                      ) : null}
 
                       {message.reactions?.map((reaction) => (
                         <button
@@ -319,8 +498,62 @@ export function ChatPanel({
           ) : null}
         </div>
 
-        <div className="flex items-end gap-2 rounded-2xl border bg-background p-2 shadow-sm">
+        {pendingFiles.length ? (
+          <div className="mb-2 flex flex-wrap gap-2">
+            {pendingFiles.map((file) => (
+              <div
+                key={`${file.name}-${file.size}`}
+                className="flex items-center gap-2 rounded-full border bg-background px-2 py-1 text-xs"
+              >
+                <span className="max-w-[160px] truncate">{file.name}</span>
+                <button
+                  type="button"
+                  className="rounded-full p-0.5 text-muted-foreground hover:text-foreground"
+                  onClick={() => removePendingFile(file.name, file.size)}
+                  aria-label="Remove attachment"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : null}
+
+        <div
+          ref={composerRef}
+          className="flex items-end gap-2 rounded-2xl border bg-background p-2 shadow-sm"
+        >
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => setIsEmojiPickerOpen((value) => !value)}
+              className="rounded-full p-2 text-muted-foreground transition hover:bg-muted"
+              aria-label="Open emoji picker"
+            >
+              <Smile className="h-4 w-4" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="rounded-full p-2 text-muted-foreground transition hover:bg-muted"
+              aria-label="Attach file"
+            >
+              <Paperclip className="h-4 w-4" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => imageInputRef.current?.click()}
+              className="rounded-full p-2 text-muted-foreground transition hover:bg-muted"
+              aria-label="Attach photo"
+            >
+              <Camera className="h-4 w-4" />
+            </button>
+          </div>
+
           <Textarea
+            ref={textareaRef}
             value={draft}
             onChange={(event) => handleTyping(event.target.value)}
             placeholder="Type a message..."
@@ -330,16 +563,50 @@ export function ChatPanel({
                 void handleSend();
               }
             }}
+            disabled={isUploading}
             className="max-h-36 min-h-11 resize-none border-0 bg-transparent shadow-none focus-visible:ring-0"
           />
           <Button
             onClick={() => void handleSend()}
             aria-label="Send message"
             className="h-10 rounded-full px-3"
+            disabled={isUploading}
           >
             <CornerDownLeft className="h-4 w-4" />
           </Button>
         </div>
+
+        {isEmojiPickerOpen ? (
+          <div className="mt-2 flex flex-wrap gap-2 rounded-xl border bg-card p-2 shadow-sm">
+            {composerEmojis.map((emoji) => (
+              <button
+                key={`composer-${emoji}`}
+                type="button"
+                onClick={() => handleAddEmoji(emoji)}
+                className="rounded-lg border px-2 py-1 text-sm hover:bg-muted"
+                aria-label={`Insert ${emoji}`}
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
+        ) : null}
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          className="hidden"
+          onChange={(event) => handleFilesSelected(event.target.files)}
+        />
+        <input
+          ref={imageInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className="hidden"
+          onChange={(event) => handleFilesSelected(event.target.files)}
+        />
       </footer>
     </section>
   );

@@ -2,7 +2,28 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { requireCurrentUser } from "./lib/auth";
 
-const ALLOWED_REACTIONS = ["👍", "❤️", "😂", "😮", "😢"];
+const ALLOWED_REACTIONS = [
+  "👍",
+  "❤️",
+  "😂",
+  "😮",
+  "😢",
+  "👏",
+  "🔥",
+  "😡",
+  "🙏",
+  "🎉",
+  "💯",
+  "🤝",
+];
+
+export const generateUploadUrl = mutation({
+  args: {},
+  handler: async (ctx) => {
+    await requireCurrentUser(ctx);
+    return ctx.storage.generateUploadUrl();
+  },
+});
 
 export const listMessages = query({
   args: {
@@ -55,9 +76,12 @@ export const listMessages = query({
           });
         }
 
+        const fileUrl = message.fileId ? await ctx.storage.getUrl(message.fileId) : null;
+
         return {
           ...message,
           sender,
+          fileUrl,
           reactions: Array.from(reactionCounts.values()).sort((left, right) =>
             left.emoji.localeCompare(right.emoji),
           ),
@@ -92,6 +116,87 @@ export const sendMessage = mutation({
       conversationId: args.conversationId,
       senderId: me._id,
       body: trimmed,
+      createdAt: now,
+    });
+
+    await ctx.db.patch(args.conversationId, {
+      lastMessageId: messageId,
+      updatedAt: now,
+    });
+
+    const unreadRows = await Promise.all(
+      conversation.memberIds.map((userId) =>
+        ctx.db
+          .query("unreadCounts")
+          .withIndex("by_conversation_user", (query) =>
+            query.eq("conversationId", args.conversationId).eq("userId", userId),
+          )
+          .unique(),
+      ),
+    );
+
+    await Promise.all(
+      conversation.memberIds.map(async (userId, index) => {
+        const row = unreadRows[index];
+        const nextCount = userId === me._id ? 0 : (row?.count ?? 0) + 1;
+
+        if (row) {
+          await ctx.db.patch(row._id, {
+            count: nextCount,
+            updatedAt: now,
+          });
+          return;
+        }
+
+        await ctx.db.insert("unreadCounts", {
+          conversationId: args.conversationId,
+          userId,
+          count: nextCount,
+          updatedAt: now,
+        });
+      }),
+    );
+
+    const myTyping = await ctx.db
+      .query("typingIndicators")
+      .withIndex("by_conversation_user", (query) =>
+        query.eq("conversationId", args.conversationId).eq("userId", me._id),
+      )
+      .unique();
+
+    if (myTyping) {
+      await ctx.db.delete(myTyping._id);
+    }
+
+    return messageId;
+  },
+});
+
+export const sendFileMessage = mutation({
+  args: {
+    conversationId: v.id("conversations"),
+    storageId: v.id("_storage"),
+    fileName: v.string(),
+    fileType: v.string(),
+    fileSize: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const me = await requireCurrentUser(ctx);
+
+    const conversation = await ctx.db.get(args.conversationId);
+    if (!conversation || !conversation.memberIds.includes(me._id)) {
+      throw new Error("Conversation not found.");
+    }
+
+    const now = Date.now();
+    const messageId = await ctx.db.insert("messages", {
+      conversationId: args.conversationId,
+      senderId: me._id,
+      body: "",
+      fileId: args.storageId,
+      fileName: args.fileName,
+      fileType: args.fileType,
+      fileSize: args.fileSize,
       createdAt: now,
     });
 

@@ -122,6 +122,35 @@ export const searchUsers = query({
     const me = await requireCurrentUser(ctx);
     const search = args.search;
 
+    const normalizeText = (value: string) =>
+      value.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+    const isSubsequence = (needle: string, haystack: string) => {
+      if (!needle) {
+        return true;
+      }
+
+      let index = 0;
+      for (const char of haystack) {
+        if (char === needle[index]) {
+          index += 1;
+        }
+        if (index === needle.length) {
+          return true;
+        }
+      }
+      return false;
+    };
+
+    const matchesSearch = (needle: string, haystack: string) => {
+      const normalizedNeedle = normalizeText(needle);
+      const normalizedHaystack = normalizeText(haystack);
+      return (
+        normalizedHaystack.includes(normalizedNeedle) ||
+        isSubsequence(normalizedNeedle, normalizedHaystack)
+      );
+    };
+
     const allUsers = await ctx.db.query("users").collect();
     const filtered = allUsers.filter((user) => {
       if (user._id === me._id || user.clerkId === me.clerkId) {
@@ -131,10 +160,10 @@ export const searchUsers = query({
         return true;
       }
 
-      const normalizedSearch = search.toLowerCase().trim();
+      const normalizedSearch = search.trim();
       return (
-        user.name.toLowerCase().includes(normalizedSearch) ||
-        user.email.toLowerCase().includes(normalizedSearch)
+        matchesSearch(normalizedSearch, user.name) ||
+        matchesSearch(normalizedSearch, user.email)
       );
     });
 

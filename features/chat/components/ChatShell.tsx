@@ -96,6 +96,70 @@ function AuthenticatedChatShell() {
     [conversations],
   );
 
+  const normalizeText = (value: string) =>
+    value.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+  const isSubsequence = (needle: string, haystack: string) => {
+    if (!needle) {
+      return true;
+    }
+
+    let index = 0;
+    for (const char of haystack) {
+      if (char === needle[index]) {
+        index += 1;
+      }
+      if (index === needle.length) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  const matchesSearch = (needle: string, haystack: string) => {
+    const normalizedNeedle = normalizeText(needle);
+    const normalizedHaystack = normalizeText(haystack);
+    return (
+      normalizedHaystack.includes(normalizedNeedle) ||
+      isSubsequence(normalizedNeedle, normalizedHaystack)
+    );
+  };
+
+  const filteredConversations = useMemo(() => {
+    const normalizedSearch = search.trim().toLowerCase();
+    if (!normalizedSearch) {
+      return typedConversations;
+    }
+
+    return typedConversations.filter((conversation) => {
+      const title = conversation.isGroup
+        ? (conversation.title ?? "group")
+        : (conversation.otherMember?.name ?? "conversation");
+
+      const preview = conversation.lastMessage?.body ?? "";
+
+      if (matchesSearch(normalizedSearch, title) || matchesSearch(normalizedSearch, preview)) {
+        return true;
+      }
+
+      if (!conversation.isGroup) {
+        const otherMember = conversation.otherMember;
+        if (!otherMember) {
+          return false;
+        }
+
+        return (
+          matchesSearch(normalizedSearch, otherMember.name) ||
+          matchesSearch(normalizedSearch, otherMember.email)
+        );
+      }
+
+      return conversation.groupMembers.some((member) =>
+        matchesSearch(normalizedSearch, `${member.name} ${member.email}`),
+      );
+    });
+  }, [typedConversations, search]);
+
   const selectedConversationId =
     activeConversationId ?? typedConversations[0]?._id ?? null;
 
@@ -162,7 +226,7 @@ function AuthenticatedChatShell() {
       {showSidebar ? (
         <ConversationSidebar
           currentUser={currentUser as User}
-          conversations={typedConversations}
+          conversations={filteredConversations}
           searchedUsers={(searchedUsers ?? []) as User[]}
           search={search}
           actionError={actionError}

@@ -21,6 +21,7 @@ export type ConversationDetails = Conversation & {
 
 export type MessageWithSender = Message & {
   sender: Doc<"users"> | null;
+  fileUrl?: string | null;
   reactions?: Array<{
     emoji: string;
     count: number;
