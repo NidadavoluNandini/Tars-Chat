@@ -65,6 +65,12 @@ body {
   font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial,
     "Apple Color Emoji", "Segoe UI Emoji";
   transition: background-color 180ms ease, color 180ms ease;
+  overflow: hidden;
+}
+
+html,
+body {
+  height: 100%;
 }
 
 button,

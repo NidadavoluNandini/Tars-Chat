@@ -266,8 +266,8 @@ export function ChatPanel({
     : (conversation.otherMember?.name ?? "Conversation");
 
   return (
-    <section className="relative flex h-full flex-1 flex-col bg-muted/20">
-      <header className="flex items-center gap-2 border-b bg-card/95 p-3 backdrop-blur">
+    <section className="flex h-full flex-1 flex-col bg-muted/20">
+      <header className="flex-shrink-0 flex items-center gap-2 border-b bg-card/95 p-3 backdrop-blur">
         {isMobile ? (
           <Button size="icon" variant="ghost" onClick={onBack} aria-label="Back to conversations">
             <ArrowLeft className="h-4 w-4" />
@@ -297,7 +297,7 @@ export function ChatPanel({
       <div
         ref={containerRef}
         onScroll={onScroll}
-        className="flex-1 space-y-3 overflow-y-auto bg-[radial-gradient(circle_at_center,hsl(var(--muted))_0%,transparent_68%)] p-3 lg:p-4"
+        className="flex-1 min-h-0 space-y-3 overflow-y-auto bg-[radial-gradient(circle_at_center,hsl(var(--muted))_0%,transparent_68%)] p-3 lg:p-4"
       >
         {messages === undefined ? (
           <div className="space-y-3">
@@ -462,7 +462,7 @@ export function ChatPanel({
         </div>
       ) : null}
 
-      <footer className="border-t bg-card/95 p-3 backdrop-blur">
+      <footer className="flex-shrink-0 border-t bg-card/95 p-3 backdrop-blur">
         {sendError ? (
           <div className="mb-2 flex items-center justify-between rounded-md border border-destructive/40 bg-destructive/5 px-2 py-1 text-xs text-destructive">
             <span>{sendError}</span>

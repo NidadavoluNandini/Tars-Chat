@@ -16,7 +16,7 @@ export function ChatShell() {
 
   if (authState === undefined) {
     return (
-      <div className="grid h-screen grid-cols-1 lg:grid-cols-[360px_1fr]">
+      <div className="grid h-dvh grid-cols-1 overflow-hidden lg:grid-cols-[360px_1fr]">
         <div className="space-y-3 border-r p-4">
           <Skeleton className="h-12 w-full" />
           <Skeleton className="h-24 w-full" />
@@ -32,7 +32,7 @@ export function ChatShell() {
 
   if (!authState.isAuthenticated) {
     return (
-      <main className="flex h-screen items-center justify-center p-4">
+      <main className="flex h-dvh items-center justify-center p-4">
         <div className="w-full max-w-lg rounded-xl border bg-card p-6 shadow-sm">
           <h1 className="text-lg font-semibold">Connect Clerk to Convex</h1>
           <p className="mt-2 text-sm text-muted-foreground">
@@ -59,7 +59,7 @@ export function ChatShell() {
 
   if (!authState.hasProfile) {
     return (
-      <main className="flex h-screen items-center justify-center p-4">
+      <main className="flex h-dvh items-center justify-center p-4">
         <div className="w-full max-w-lg rounded-xl border bg-card p-6 shadow-sm">
           <h1 className="text-lg font-semibold">Setting up your chat profile</h1>
           <p className="mt-2 text-sm text-muted-foreground">
@@ -165,7 +165,7 @@ function AuthenticatedChatShell() {
 
   if (!currentUser) {
     return (
-      <div className="grid h-screen grid-cols-1 lg:grid-cols-[360px_1fr]">
+      <div className="grid h-dvh grid-cols-1 overflow-hidden lg:grid-cols-[360px_1fr]">
         <div className="space-y-3 border-r p-4">
           <Skeleton className="h-12 w-full" />
           <Skeleton className="h-24 w-full" />
@@ -222,7 +222,7 @@ function AuthenticatedChatShell() {
   };
 
   return (
-    <div className="grid h-screen grid-cols-1 bg-muted/25 lg:grid-cols-[360px_1fr]">
+    <div className="grid h-dvh grid-cols-1 overflow-hidden bg-muted/25 lg:grid-cols-[360px_1fr]">
       {showSidebar ? (
         <ConversationSidebar
           currentUser={currentUser as User}
