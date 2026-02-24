@@ -307,7 +307,7 @@ export function ChatPanel({
           </div>
         ) : safeMessages.length ? (
           safeMessages.map((message) => {
-            const isMine = message.senderId === currentUserId;
+            const isMine = String(message.senderId) === String(currentUserId);
             const senderName = message.sender?.name ?? "User";
 
             return (
@@ -316,10 +316,10 @@ export function ChatPanel({
                 className={`flex ${isMine ? "justify-end" : "justify-start"}`}
               >
                 <div
-                  className={`max-w-[88%] rounded-2xl px-3 py-2 text-sm shadow-sm transition-all duration-200 hover:shadow lg:max-w-[72%] ${
+                  className={`rounded-2xl text-sm shadow-sm transition-all duration-200 hover:shadow ${
                     isMine
-                      ? "rounded-br-md bg-primary text-primary-foreground"
-                      : "rounded-bl-md border bg-card"
+                      ? "max-w-[68%] rounded-br-md bg-primary px-2.5 py-1.5 text-primary-foreground lg:max-w-[46%]"
+                      : "max-w-[88%] rounded-bl-md border bg-card px-3 py-2 lg:max-w-[72%]"
                   }`}
                 >
                   {!isMine ? <p className="mb-1 text-xs font-semibold">{senderName}</p> : null}
@@ -374,7 +374,7 @@ export function ChatPanel({
                           key={`${message._id}-${emoji}-picker`}
                           type="button"
                           onClick={() => void toggleReaction({ messageId: message._id, emoji })}
-                          className="rounded-full border px-1.5 py-0.5 text-xs opacity-60 transition hover:opacity-100"
+                          className="rounded-full border px-1.5 py-0.5 text-xs transition hover:bg-muted"
                           aria-label={`React with ${emoji}`}
                         >
                           {emoji}
@@ -390,7 +390,7 @@ export function ChatPanel({
                                 current === message._id ? null : message._id,
                               )
                             }
-                            className="rounded-full border px-2 py-0.5 text-xs opacity-70 transition hover:opacity-100"
+                            className="rounded-full border px-2 py-0.5 text-xs transition hover:bg-muted"
                             aria-label="More reactions"
                           >
                             <Plus className="h-3 w-3" />
@@ -406,7 +406,7 @@ export function ChatPanel({
                                     void toggleReaction({ messageId: message._id, emoji });
                                     setOpenReactionPickerId(null);
                                   }}
-                                  className="rounded-md border px-1 py-1 text-xs hover:bg-muted"
+                                  className="rounded-md border px-1 py-1 text-xs transition hover:bg-muted"
                                   aria-label={`React with ${emoji}`}
                                 >
                                   {emoji}
@@ -584,7 +584,7 @@ export function ChatPanel({
                 key={`composer-${emoji}`}
                 type="button"
                 onClick={() => handleAddEmoji(emoji)}
-                className="rounded-lg border px-2 py-1 text-sm hover:bg-muted"
+                className="rounded-lg border px-2 py-1 text-base transition hover:bg-muted"
                 aria-label={`Insert ${emoji}`}
               >
                 {emoji}
