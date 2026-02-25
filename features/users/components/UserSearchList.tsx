@@ -48,13 +48,22 @@ export function UserSearchList({
             className="h-auto w-full justify-start gap-2 rounded-lg px-2 py-2"
             onClick={() => onUserSelect(user._id)}
           >
-            <Avatar className="h-8 w-8">
-              <AvatarImage src={user.image} alt={user.name} />
-              <AvatarFallback>{user.name.slice(0, 1).toUpperCase()}</AvatarFallback>
-            </Avatar>
+            <div className="relative">
+              <Avatar className="h-8 w-8">
+                <AvatarImage src={user.image} alt={user.name} />
+                <AvatarFallback>{user.name.slice(0, 1).toUpperCase()}</AvatarFallback>
+              </Avatar>
+              <span
+                className={`absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border border-card ${
+                  user.isOnline ? "bg-emerald-500" : "bg-muted-foreground/40"
+                }`}
+              />
+            </div>
             <div className="flex-1 text-left">
               <p className="text-sm font-medium">{user.name}</p>
-              <p className="text-xs text-muted-foreground">{user.email}</p>
+              <p className="text-xs text-muted-foreground">
+                {user.isOnline ? "Online" : "Offline"}
+              </p>
             </div>
           </Button>
         ))}

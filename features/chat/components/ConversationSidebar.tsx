@@ -45,7 +45,9 @@ export function ConversationSidebar({
           </Avatar>
           <div>
             <p className="text-sm font-semibold">{currentUser.name}</p>
-            <p className="text-xs text-muted-foreground">{currentUser.email}</p>
+            <p className="text-xs text-muted-foreground">
+              {currentUser.isOnline ? "Online" : "Offline"}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-1">
