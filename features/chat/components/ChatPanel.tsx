@@ -75,10 +75,14 @@ export function ChatPanel({
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const imageInputRef = useRef<HTMLInputElement | null>(null);
   const composerRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const cameraVideoRef = useRef<HTMLVideoElement | null>(null);
+  const cameraStreamRef = useRef<MediaStream | null>(null);
 
   const composerEmojis = [
     "😀",
@@ -174,6 +178,97 @@ export function ChatPanel({
     textareaRef.current?.focus();
   };
 
+  const stopCameraStream = () => {
+    if (cameraStreamRef.current) {
+      cameraStreamRef.current.getTracks().forEach((track) => track.stop());
+      cameraStreamRef.current = null;
+    }
+    if (cameraVideoRef.current) {
+      cameraVideoRef.current.srcObject = null;
+    }
+  };
+
+  const closeCameraModal = () => {
+    stopCameraStream();
+    setIsCameraOpen(false);
+    setCameraError(null);
+    textareaRef.current?.focus();
+  };
+
+  const handleCameraClick = () => {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      if (!imageInputRef.current) {
+        return;
+      }
+
+      imageInputRef.current.value = "";
+      imageInputRef.current.click();
+      return;
+    }
+
+    setCameraError(null);
+
+    void navigator.mediaDevices
+      .getUserMedia({
+        video: {
+          facingMode: { ideal: "environment" },
+        },
+        audio: false,
+      })
+      .then((stream) => {
+        stopCameraStream();
+        cameraStreamRef.current = stream;
+        setIsCameraOpen(true);
+      })
+      .catch(() => {
+        setCameraError("Camera access was denied. Please allow permission and retry.");
+      });
+  };
+
+  const handleCapturePhoto = async () => {
+    const video = cameraVideoRef.current;
+
+    if (!video) {
+      return;
+    }
+
+    const width = video.videoWidth;
+    const height = video.videoHeight;
+
+    if (!width || !height) {
+      setCameraError("Camera is not ready yet. Try again in a moment.");
+      return;
+    }
+
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+
+    const context = canvas.getContext("2d");
+    if (!context) {
+      setCameraError("Unable to capture photo right now.");
+      return;
+    }
+
+    context.drawImage(video, 0, 0, width, height);
+
+    const blob = await new Promise<Blob | null>((resolve) => {
+      canvas.toBlob(resolve, "image/jpeg", 0.92);
+    });
+
+    if (!blob) {
+      setCameraError("Unable to capture photo right now.");
+      return;
+    }
+
+    const capturedFile = new File([blob], `photo-${Date.now()}.jpg`, {
+      type: "image/jpeg",
+    });
+
+    setPendingFiles((current) => [...current, capturedFile]);
+    closeCameraModal();
+  };
+
   const removePendingFile = (name: string, size: number) => {
     setPendingFiles((current) =>
       current.filter((file) => file.name !== name || file.size !== size),
@@ -262,6 +357,21 @@ export function ChatPanel({
     return () => window.removeEventListener("keydown", handleComposerEnter);
   }, [handleSend]);
 
+  useEffect(() => {
+    if (!isCameraOpen || !cameraVideoRef.current || !cameraStreamRef.current) {
+      return;
+    }
+
+    cameraVideoRef.current.srcObject = cameraStreamRef.current;
+    void cameraVideoRef.current.play();
+  }, [isCameraOpen]);
+
+  useEffect(() => {
+    return () => {
+      stopCameraStream();
+    };
+  }, []);
+
   if (conversation === undefined) {
     return (
       <section className="flex h-full flex-1 flex-col gap-3 p-3">
@@ -289,7 +399,7 @@ export function ChatPanel({
 
   return (
     <section className="relative flex h-full min-h-0 flex-1 flex-col bg-muted/20">
-      <header className="shrink-0 flex items-center gap-2 border-b bg-card/95 p-3 backdrop-blur">
+      <header className="shrink-0 flex items-center gap-2 border-b border-border/60 bg-card px-3 py-3">
         {isMobile ? (
           <Button
             size="icon"
@@ -302,7 +412,7 @@ export function ChatPanel({
         ) : null}
 
         <div className="relative">
-          <Avatar className="h-9 w-9">
+          <Avatar className="h-9 w-9 ring-1 ring-border/60">
             <AvatarImage src={conversation.otherMember?.image} alt={title} />
             <AvatarFallback>{title.slice(0, 1).toUpperCase()}</AvatarFallback>
           </Avatar>
@@ -326,7 +436,7 @@ export function ChatPanel({
       <div
         ref={containerRef}
         onScroll={onScroll}
-        className="flex-1 min-h-0 space-y-3 overflow-y-auto bg-slate-50 p-3 lg:p-4"
+        className="min-h-0 flex-1 space-y-3 overflow-y-auto bg-muted/10 p-3 lg:p-4"
       >
         {messages === undefined ? (
           <div className="space-y-3">
@@ -346,26 +456,25 @@ export function ChatPanel({
                 className={`flex ${isMine ? "justify-end" : "justify-start"}`}
               >
                 <div
-                  className={`rounded-2xl text-sm shadow-sm transition-all duration-200 hover:shadow ${
+                  className={`rounded-2xl border text-sm shadow-sm transition-all duration-200 hover:shadow ${
                     isMine
                       ? [
                           "max-w-[60%] lg:max-w-[40%]",
                           "rounded-br-md",
-                          "bg-[#1A73E8]", // primary blue, like send button
+                          "border-primary/20 bg-primary text-primary-foreground",
                           "px-3 py-1.5",
-                          "text-white",
                         ].join(" ")
                       : [
                           "max-w-[70%] lg:max-w-[55%]",
                           "rounded-bl-md",
-                          "bg-[#E3F2FF]", // light blue for others
+                          "border-border/70 bg-card",
                           "px-3 py-1.5",
-                          "text-slate-900",
+                          "text-card-foreground",
                         ].join(" ")
                   }`}
                 >
                   {!isMine ? (
-                    <p className="mb-1 text-xs font-semibold text-slate-700">
+                    <p className="mb-1 text-xs font-semibold text-muted-foreground">
                       {senderName}
                     </p>
                   ) : null}
@@ -385,7 +494,7 @@ export function ChatPanel({
                             href={message.fileUrl}
                             target="_blank"
                             rel="noreferrer"
-                            className="mb-2 inline-flex items-center gap-2 rounded-md border bg-background/60 px-2 py-1 text-xs text-muted-foreground"
+                            className="mb-2 inline-flex items-center gap-2 rounded-md border bg-background/70 px-2 py-1 text-xs text-muted-foreground"
                           >
                             {message.fileName ?? "Attachment"}
                           </a>
@@ -429,7 +538,7 @@ export function ChatPanel({
                               emoji,
                             })
                           }
-                          className="rounded-full border px-1.5 py-0.5 text-xs transition hover:bg-muted"
+                          className="rounded-full border border-border/70 bg-background/70 px-1.5 py-0.5 text-xs transition hover:bg-muted"
                           aria-label={`React with ${emoji}`}
                         >
                           {emoji}
@@ -445,14 +554,14 @@ export function ChatPanel({
                                 current === message._id ? null : message._id,
                               )
                             }
-                            className="rounded-full border px-2 py-0.5 text-xs transition hover:bg-muted"
+                            className="rounded-full border border-border/70 bg-background/70 px-2 py-0.5 text-xs transition hover:bg-muted"
                             aria-label="More reactions"
                           >
                             <Plus className="h-3 w-3" />
                           </button>
 
                           {openReactionPickerId === message._id ? (
-                            <div className="absolute right-0 z-10 mt-1 grid w-32 grid-cols-4 gap-1 rounded-lg border bg-card p-2 shadow-lg">
+                            <div className="absolute right-0 z-10 mt-1 grid w-32 grid-cols-4 gap-1 rounded-lg border border-border bg-card p-2 shadow-lg">
                               {overflowReactions.map((emoji) => (
                                 <button
                                   key={`${message._id}-${emoji}-overflow`}
@@ -464,7 +573,7 @@ export function ChatPanel({
                                     });
                                     setOpenReactionPickerId(null);
                                   }}
-                                  className="rounded-md border px-1 py-1 text-xs transition hover:bg-muted"
+                                  className="rounded-md border border-border/70 px-1 py-1 text-xs transition hover:bg-muted"
                                   aria-label={`React with ${emoji}`}
                                 >
                                   {emoji}
@@ -487,8 +596,8 @@ export function ChatPanel({
                           }
                           className={`rounded-full border px-2 py-0.5 text-xs transition ${
                             reaction.reactedByMe
-                              ? "border-primary bg-primary/10"
-                              : "bg-background/50"
+                              ? "border-primary/40 bg-primary/10"
+                              : "border-border/70 bg-background/50"
                           }`}
                           aria-label={`Toggle ${reaction.emoji} reaction`}
                         >
@@ -502,7 +611,7 @@ export function ChatPanel({
             );
           })
         ) : (
-          <div className="flex h-full items-center justify-center rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
+          <div className="flex h-full items-center justify-center rounded-xl border border-dashed border-border bg-card/40 p-8 text-center text-sm text-muted-foreground">
             No messages yet. Say hello 👋
           </div>
         )}
@@ -520,7 +629,7 @@ export function ChatPanel({
         </div>
       ) : null}
 
-      <footer className="shrink-0 border-t bg-card/95 p-3 backdrop-blur">
+      <footer className="shrink-0 border-t border-border/60 bg-card p-3">
         {sendError ? (
           <div className="mb-2 flex items-center justify-between rounded-md border border-destructive/40 bg-destructive/5 px-2 py-1 text-xs text-destructive">
             <span>{sendError}</span>
@@ -562,7 +671,7 @@ export function ChatPanel({
             {pendingFiles.map((file) => (
               <div
                 key={`${file.name}-${file.size}`}
-                className="flex items-center gap-2 rounded-full border bg-background px-2 py-1 text-xs"
+                className="flex items-center gap-2 rounded-full border border-border/70 bg-background px-2 py-1 text-xs"
               >
                 <span className="max-w-40 truncate">{file.name}</span>
                 <button
@@ -580,13 +689,13 @@ export function ChatPanel({
 
         <div
           ref={composerRef}
-          className="flex items-end gap-2 rounded-2xl border bg-background p-2 shadow-sm"
+          className="flex items-end gap-2 rounded-2xl border border-border/70 bg-background p-2 shadow-sm"
         >
           <div className="flex items-center gap-1">
             <button
               type="button"
               onClick={() => setIsEmojiPickerOpen((value) => !value)}
-              className="rounded-full p-2 text-muted-foreground transition hover:bg-muted"
+              className="rounded-full p-2 text-muted-foreground transition hover:bg-muted/70"
               aria-label="Open emoji picker"
             >
               <Smile className="h-4 w-4" />
@@ -595,7 +704,7 @@ export function ChatPanel({
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="rounded-full p-2 text-muted-foreground transition hover:bg-muted"
+              className="rounded-full p-2 text-muted-foreground transition hover:bg-muted/70"
               aria-label="Attach file"
             >
               <Paperclip className="h-4 w-4" />
@@ -603,8 +712,8 @@ export function ChatPanel({
 
             <button
               type="button"
-              onClick={() => imageInputRef.current?.click()}
-              className="rounded-full p-2 text-muted-foreground transition hover:bg-muted"
+              onClick={handleCameraClick}
+              className="rounded-full p-2 text-muted-foreground transition hover:bg-muted/70"
               aria-label="Attach photo"
             >
               <Camera className="h-4 w-4" />
@@ -628,7 +737,7 @@ export function ChatPanel({
           <Button
             onClick={() => void handleSend()}
             aria-label="Send message"
-            className="h-10 rounded-full px-3 bg-[#1A73E8] hover:bg-[#155BD0]"
+            className="h-10 rounded-full px-3"
             disabled={isUploading}
           >
             <CornerDownLeft className="h-4 w-4" />
@@ -636,18 +745,66 @@ export function ChatPanel({
         </div>
 
         {isEmojiPickerOpen ? (
-          <div className="mt-2 flex flex-wrap gap-2 rounded-xl border bg-card p-2 shadow-sm">
+          <div className="mt-2 flex flex-wrap gap-2 rounded-xl border border-border/70 bg-card p-2 shadow-sm">
             {composerEmojis.map((emoji) => (
               <button
                 key={`composer-${emoji}`}
                 type="button"
                 onClick={() => handleAddEmoji(emoji)}
-                className="rounded-lg border px-2 py-1 text-base transition hover:bg-muted"
+                className="rounded-lg border border-border/70 px-2 py-1 text-base transition hover:bg-muted"
                 aria-label={`Insert ${emoji}`}
               >
                 {emoji}
               </button>
             ))}
+          </div>
+        ) : null}
+
+        {isCameraOpen ? (
+          <div className="mx-auto mt-2 w-full max-w-md rounded-xl border border-border/70 bg-card p-2 shadow-sm">
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-xs font-medium text-muted-foreground">Camera preview</p>
+              <button
+                type="button"
+                onClick={closeCameraModal}
+                className="rounded-md p-1 text-muted-foreground transition hover:bg-muted"
+                aria-label="Close camera"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <video
+              ref={cameraVideoRef}
+              autoPlay
+              playsInline
+              muted
+              className="aspect-4/3 w-full rounded-lg border bg-black object-contain"
+            />
+
+            <div className="mt-2 flex gap-2">
+              <Button
+                type="button"
+                className="flex-1"
+                onClick={() => void handleCapturePhoto()}
+              >
+                Capture photo
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                className="flex-1"
+                onClick={closeCameraModal}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        ) : null}
+
+        {cameraError ? (
+          <div className="mt-2 rounded-md border border-destructive/40 bg-destructive/5 px-2 py-1 text-xs text-destructive">
+            {cameraError}
           </div>
         ) : null}
 

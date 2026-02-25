@@ -52,7 +52,7 @@ export function GroupCreator({ users, onCreateGroup }: GroupCreatorProps) {
   };
 
   return (
-    <section className="space-y-2 rounded-lg border bg-background p-2 transition-all duration-200 hover:shadow-sm">
+    <section className="space-y-2 rounded-xl border border-border/70 bg-background p-2.5">
       <div className="flex items-center justify-between gap-2">
         <p className="text-xs font-semibold text-muted-foreground">Group chat</p>
         <Button size="sm" variant="secondary" onClick={() => setIsOpen((value) => !value)}>
@@ -62,22 +62,24 @@ export function GroupCreator({ users, onCreateGroup }: GroupCreatorProps) {
       </div>
 
       {isOpen ? (
-        <div className="space-y-2 animate-in fade-in-0 duration-200">
+        <div className="space-y-2">
           <Input
             value={title}
             onChange={(event) => setTitle(event.target.value)}
             placeholder="Group name"
           />
 
-          <div className="max-h-32 space-y-1 overflow-y-auto rounded-md border p-1">
+          <div className="max-h-32 space-y-1 overflow-y-auto rounded-lg border border-border p-1.5">
             {users.map((user) => {
               const selected = selectedIds.includes(user._id);
               return (
                 <button
                   key={user._id}
                   type="button"
-                  className={`flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-sm transition ${
-                    selected ? "bg-primary/10" : "hover:bg-muted"
+                  className={`flex w-full items-center justify-between rounded-md border px-2 py-1.5 text-left text-sm transition ${
+                    selected
+                      ? "border-primary/30 bg-primary/10"
+                      : "border-transparent hover:border-border hover:bg-muted/50"
                   }`}
                   onClick={() => toggleUser(user._id)}
                 >

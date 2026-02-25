@@ -25,8 +25,8 @@ export function UserSearchList({
   const hasSearch = Boolean(search.trim());
 
   return (
-    <section className="space-y-3 border-b bg-card/70 p-3">
-      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+    <section className="space-y-3 border-b border-border/60 bg-card px-3 py-3">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
         Start New Chat
       </p>
 
@@ -36,16 +36,16 @@ export function UserSearchList({
           value={search}
           onChange={(event) => onSearchChange(event.target.value)}
           placeholder="Search users or chats"
-          className="rounded-full border bg-background pl-9 shadow-sm"
+          className="rounded-full border-border/70 bg-background pl-9"
         />
       </div>
 
-      <div className="max-h-44 space-y-1 overflow-y-auto rounded-xl border bg-background/70 p-1">
+      <div className="max-h-44 space-y-1 overflow-y-auto rounded-xl border border-border/70 bg-background p-1">
         {users.map((user) => (
           <Button
             key={user._id}
             variant="ghost"
-            className="h-auto w-full justify-start gap-2 rounded-lg px-2 py-2"
+            className="h-auto w-full justify-start gap-2 rounded-lg border border-transparent px-2.5 py-2 hover:border-border hover:bg-muted/50"
             onClick={() => onUserSelect(user._id)}
           >
             <div className="relative">
@@ -69,7 +69,7 @@ export function UserSearchList({
         ))}
 
         {!users.length ? (
-          <div className="rounded-md border border-dashed p-3 text-sm text-muted-foreground">
+          <div className="rounded-md border border-dashed border-border p-3 text-sm text-muted-foreground">
             <div className="mb-1 flex items-center gap-2">
               <UserRound className="h-4 w-4" />
               {hasSearch ? "No matching users." : "No users found."}

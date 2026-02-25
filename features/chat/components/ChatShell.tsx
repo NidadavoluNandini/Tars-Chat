@@ -222,7 +222,7 @@ function AuthenticatedChatShell() {
   };
 
   return (
-    <div className="grid h-dvh min-h-0 grid-cols-1 overflow-hidden bg-muted/25 lg:grid-cols-[360px_1fr]">
+    <div className="grid h-dvh min-h-0 grid-cols-1 overflow-hidden bg-background lg:grid-cols-[360px_1fr]">
       {showSidebar ? (
         <ConversationSidebar
           currentUser={currentUser as User}
@@ -247,8 +247,8 @@ function AuthenticatedChatShell() {
             onBack={() => setIsMobileChatOpen(false)}
           />
         ) : (
-          <section className="hidden h-full min-h-0 items-center justify-center p-6 text-center lg:flex">
-            <div className="rounded-2xl border bg-card/80 px-10 py-12 shadow-sm backdrop-blur">
+          <section className="hidden h-full min-h-0 items-center justify-center bg-muted/20 p-6 text-center lg:flex">
+            <div className="rounded-2xl border border-border/60 bg-card px-10 py-12 shadow-sm">
               <p className="text-lg font-medium">Select a conversation</p>
               <p className="mt-1 text-sm text-muted-foreground">
                 Start from the sidebar or search for a teammate.

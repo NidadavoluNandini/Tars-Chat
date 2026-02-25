@@ -36,8 +36,8 @@ export function ConversationSidebar({
   onConversationSelect,
 }: ConversationSidebarProps) {
   return (
-    <aside className="flex h-full min-h-0 w-full flex-col border-r bg-background lg:w-90">
-      <header className="flex items-center justify-between border-b bg-card/90 p-3 backdrop-blur">
+    <aside className="flex h-full min-h-0 w-full flex-col border-r border-border/60 bg-card lg:w-90">
+      <header className="flex items-center justify-between border-b border-border/60 bg-card px-4 py-3">
         <div className="flex items-center gap-2">
           <Avatar className="h-8 w-8">
             <AvatarImage src={currentUser.image} alt={currentUser.name} />
@@ -65,13 +65,13 @@ export function ConversationSidebar({
       />
 
       {actionError ? (
-        <div className="mx-3 mt-2 rounded-lg border border-destructive/40 bg-destructive/5 px-2 py-1.5 text-xs text-destructive">
+        <div className="mx-3 mt-2 rounded-lg border border-destructive/40 bg-destructive/10 px-2.5 py-1.5 text-xs text-destructive">
           {actionError}
         </div>
       ) : null}
 
-      <div className="min-h-0 flex-1 overflow-y-auto p-2.5">
-        <p className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+      <div className="min-h-0 flex-1 overflow-y-auto px-2.5 py-3">
+        <p className="mb-2 px-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
           Recent Chats
         </p>
 
@@ -95,13 +95,15 @@ export function ConversationSidebar({
                 <li key={conversation._id}>
                   <Button
                     variant="ghost"
-                    className={`h-auto w-full justify-start gap-3 rounded-2xl border px-2.5 py-2.5 transition-all hover:bg-muted/60 ${
-                      isActive ? "border-primary/35 bg-primary/10 shadow-sm" : "border-transparent"
+                    className={`h-auto w-full justify-start gap-3 rounded-xl border px-3 py-2.5 transition-all hover:border-border hover:bg-muted/50 ${
+                      isActive
+                        ? "border-primary/30 bg-primary/10 shadow-sm"
+                        : "border-transparent"
                     }`}
                     onClick={() => onConversationSelect(conversation._id)}
                   >
                     <div className="relative">
-                      <Avatar className="h-10 w-10">
+                      <Avatar className="h-10 w-10 ring-1 ring-border/60">
                         <AvatarImage
                           src={conversation.otherMember?.image}
                           alt={title}
@@ -123,7 +125,7 @@ export function ConversationSidebar({
                         ) : null}
                       </div>
 
-                      <p className="truncate text-xs text-muted-foreground/90">
+                      <p className="truncate text-xs text-muted-foreground">
                         {conversation.isGroup
                           ? `${conversation.groupOnlineCount}/${conversation.groupMembers.length} online · ${preview}`
                           : preview}
@@ -131,7 +133,7 @@ export function ConversationSidebar({
                     </div>
 
                     {conversation.unreadCount > 0 ? (
-                      <Badge className="min-w-6 justify-center rounded-full px-1.5 shadow-sm">
+                      <Badge className="min-w-6 justify-center rounded-full px-1.5">
                         {conversation.unreadCount}
                       </Badge>
                     ) : null}
@@ -141,7 +143,7 @@ export function ConversationSidebar({
             })}
           </ul>
         ) : (
-          <div className="flex h-full flex-col items-center justify-center rounded-xl border border-dashed bg-background/70 p-6 text-center">
+          <div className="flex h-full flex-col items-center justify-center rounded-xl border border-dashed bg-background p-6 text-center">
             <MessageCircleMore className="mb-2 h-6 w-6 text-muted-foreground" />
             <p className="text-sm font-medium">No conversations yet</p>
             <p className="mt-1 text-xs text-muted-foreground">

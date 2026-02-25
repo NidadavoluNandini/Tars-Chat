@@ -6,11 +6,11 @@ import { Button } from "@/components/ui/button";
 
 export function AuthScreen() {
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4 py-10">
+    <main className="relative h-dvh overflow-y-auto bg-background px-4 py-6 sm:py-10 md:flex md:items-center md:justify-center">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,oklch(from_var(--primary)_l_c_h/0.15),transparent_40%)]" />
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,oklch(from_var(--primary)_l_c_h/0.08),transparent_42%)]" />
 
-      <section className="relative grid w-full max-w-5xl overflow-hidden rounded-3xl border bg-card/85 shadow-xl backdrop-blur md:grid-cols-2">
+      <section className="relative mx-auto grid w-full max-w-5xl overflow-hidden rounded-3xl border bg-card/85 shadow-xl backdrop-blur md:grid-cols-2">
         <div className="flex flex-col justify-between border-b bg-card/70 p-7 md:border-b-0 md:border-r md:p-10">
           <div>
             <div className="mb-5 inline-flex items-center gap-2 rounded-full border bg-background/80 px-3 py-1 text-xs font-medium text-muted-foreground">
