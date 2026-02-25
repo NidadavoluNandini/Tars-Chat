@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 
 export function AuthScreen() {
   return (
-    <main className="relative min-h-dvh overflow-y-auto bg-gradient-to-br from-slate-50 via-white to-sky-50 px-4 py-8 sm:py-10 md:flex md:items-center md:justify-center">
+    <main className="relative min-h-screen supports-[min-height:100dvh]:min-h-dvh overflow-y-auto bg-linear-to-br from-slate-50 via-white to-sky-50 px-4 py-8 sm:py-10 md:flex md:items-center md:justify-center">
       {/* soft background blobs */}
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -left-20 top-0 h-64 w-64 rounded-full bg-sky-200/40 blur-3xl" />
@@ -51,7 +51,7 @@ export function AuthScreen() {
               {/* light grid */}
               <div className="pointer-events-none absolute inset-0 opacity-60">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.18),transparent_55%)]" />
-                <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(148,163,184,0.25)_1px,transparent_1px),linear-gradient(to_bottom,rgba(148,163,184,0.25)_1px,transparent_1px)] bg-[size:18px_18px]" />
+                <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(148,163,184,0.25)_1px,transparent_1px),linear-gradient(to_bottom,rgba(148,163,184,0.25)_1px,transparent_1px)] bg-size-[18px_18px]" />
               </div>
 
               <div className="relative space-y-3">
