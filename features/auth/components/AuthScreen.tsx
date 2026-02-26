@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 
 export function AuthScreen() {
   return (
-    <main className="relative min-h-screen supports-[min-height:100dvh]:min-h-dvh overflow-y-auto bg-linear-to-br from-slate-50 via-white to-sky-50 px-4 py-8 sm:py-10 md:flex md:items-center md:justify-center">
+    <main className="relative min-h-screen supports-[min-height:100dvh]:min-h-dvh overflow-x-hidden bg-linear-to-br from-slate-50 via-white to-sky-50 px-4 py-8 sm:py-10 md:flex md:items-center md:justify-center">
       {/* soft background blobs */}
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -left-20 top-0 h-64 w-64 rounded-full bg-sky-200/40 blur-3xl" />
