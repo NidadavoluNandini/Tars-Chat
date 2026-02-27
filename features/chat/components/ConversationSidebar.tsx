@@ -36,8 +36,9 @@ export function ConversationSidebar({
   onConversationSelect,
 }: ConversationSidebarProps) {
   return (
-    <aside className="flex h-full min-h-0 w-full flex-col border-r border-border/60 bg-card lg:w-90">
-      <header className="flex items-center justify-between border-b border-border/60 bg-card px-4 py-3">
+    <aside className="flex h-full min-h-0 w-full flex-col overflow-hidden border-r border-border/60 bg-card lg:w-90">
+      <div className="shrink-0">
+        <header className="flex items-center justify-between border-b border-border/60 bg-card px-4 py-3">
         <div className="flex items-center gap-2">
           <Avatar className="h-8 w-8">
             <AvatarImage src={currentUser.image} alt={currentUser.name} />
@@ -54,21 +55,22 @@ export function ConversationSidebar({
           <ThemeToggle />
           <UserButton />
         </div>
-      </header>
+        </header>
 
-      <UserSearchList
-        search={search}
-        users={searchedUsers}
-        onSearchChange={onSearchChange}
-        onUserSelect={onUserSelect}
-        onCreateGroup={onCreateGroup}
-      />
+        <UserSearchList
+          search={search}
+          users={searchedUsers}
+          onSearchChange={onSearchChange}
+          onUserSelect={onUserSelect}
+          onCreateGroup={onCreateGroup}
+        />
 
-      {actionError ? (
-        <div className="mx-3 mt-2 rounded-lg border border-destructive/40 bg-destructive/10 px-2.5 py-1.5 text-xs text-destructive">
-          {actionError}
-        </div>
-      ) : null}
+        {actionError ? (
+          <div className="mx-3 mt-2 rounded-lg border border-destructive/40 bg-destructive/10 px-2.5 py-1.5 text-xs text-destructive">
+            {actionError}
+          </div>
+        ) : null}
+      </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-2.5 py-3">
         <p className="mb-2 px-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">

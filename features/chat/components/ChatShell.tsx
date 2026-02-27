@@ -222,7 +222,7 @@ function AuthenticatedChatShell() {
   };
 
   return (
-    <div className="grid min-h-screen supports-[min-height:100dvh]:min-h-dvh grid-cols-1 overflow-hidden bg-background lg:grid-cols-[360px_1fr]">
+    <div className="grid h-screen supports-[height:100dvh]:h-dvh grid-cols-1 overflow-hidden bg-background lg:grid-cols-[360px_1fr]">
       {showSidebar ? (
         <ConversationSidebar
           currentUser={currentUser as User}

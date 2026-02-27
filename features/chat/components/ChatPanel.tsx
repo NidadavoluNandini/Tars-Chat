@@ -398,7 +398,7 @@ export function ChatPanel({
     : conversation.otherMember?.name ?? "Conversation";
 
   return (
-    <section className="relative flex h-full min-h-0 flex-1 flex-col bg-muted/20">
+    <section className="relative flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-muted/20">
       <header className="shrink-0 flex items-center gap-2 border-b border-border/60 bg-card px-3 py-3">
         {isMobile ? (
           <Button
