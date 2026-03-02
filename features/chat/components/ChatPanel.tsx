@@ -474,33 +474,41 @@ export function ChatPanel({
     : conversation.otherMember?.name ?? "Conversation";
 
   return (
-    <section className="relative flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-muted/20">
-      <header className="shrink-0 flex items-center gap-2 border-b border-border/60 bg-card px-3 py-3">
+    <section className="relative flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-linear-to-b from-muted/5 via-muted/10 to-muted/20">
+      <header className="shrink-0 flex items-center gap-3 border-b border-border/60 bg-card/95 px-4 py-3.5 backdrop-blur-sm shadow-sm">
         {isMobile ? (
           <Button
             size="icon"
             variant="ghost"
             onClick={onBack}
             aria-label="Back to conversations"
+            className="hover:bg-muted/80 transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
         ) : null}
 
         <div className="relative">
-          <Avatar className="h-9 w-9 ring-1 ring-border/60">
+          <Avatar className="h-10 w-10 ring-2 ring-primary/20 ring-offset-2 ring-offset-background transition-all">
             <AvatarImage src={conversation.otherMember?.image} alt={title} />
-            <AvatarFallback>{title.slice(0, 1).toUpperCase()}</AvatarFallback>
+            <AvatarFallback className="bg-linear-to-br from-primary to-primary/70 text-primary-foreground">{title.slice(0, 1).toUpperCase()}</AvatarFallback>
           </Avatar>
           {!conversation.isGroup && conversation.otherMember?.isOnline ? (
-            <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border border-background bg-emerald-500" />
+            <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-background bg-emerald-500 shadow-md animate-pulse" />
           ) : null}
         </div>
 
-        <div>
+        <div className="flex-1">
           <p className="text-sm font-semibold">{title}</p>
-          <div className="flex flex-col">
-            <p className="text-xs text-muted-foreground">
+          <div className="flex flex-col -mt-0.5">
+            <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+              <span className={`h-1.5 w-1.5 rounded-full ${
+                conversation.isGroup
+                  ? "bg-sky-500"
+                  : conversation.otherMember?.isOnline
+                    ? "bg-emerald-500"
+                    : "bg-gray-400"
+              }`} />
               {conversation.isGroup
                 ? `${conversation.groupOnlineCount}/${conversation.groupMembers.length} online`
                 : conversation.otherMember?.isOnline
@@ -508,7 +516,7 @@ export function ChatPanel({
                   : "Offline"}
             </p>
             {typingUsers && typingUsers.length > 0 ? (
-              <p className="text-xs italic text-primary">
+              <p className="text-xs italic text-primary font-medium animate-pulse">
                 {conversation.isGroup
                   ? typingUsers.length === 1
                     ? `${typingUsers[0]} is typing...`
@@ -540,23 +548,24 @@ export function ChatPanel({
             return (
               <article
                 key={message._id}
-                className={`flex ${isMine ? "justify-end" : "justify-start"}`}
+                className={`flex message-enter ${isMine ? "justify-end" : "justify-start"}`}
               >
                 <div
-                  className={`rounded-2xl border text-sm shadow-sm transition-all duration-200 hover:shadow ${
+                  className={`group rounded-2xl border text-sm shadow-md transition-all duration-200 hover:shadow-lg ${
                     isMine
                       ? [
                           "max-w-[60%] lg:max-w-[40%]",
                           "rounded-br-md",
-                          "border-primary/20 bg-primary text-primary-foreground",
-                          "px-3 py-1.5",
+                          "border-primary/30 bg-linear-to-br from-primary to-primary/90",
+                          "text-primary-foreground shadow-primary/20",
+                          "px-3.5 py-2",
                         ].join(" ")
                       : [
                           "max-w-[70%] lg:max-w-[55%]",
                           "rounded-bl-md",
-                          "border-border/70 bg-card",
-                          "px-3 py-1.5",
-                          "text-card-foreground",
+                          "border-border/50 bg-card/95 backdrop-blur-sm",
+                          "px-3.5 py-2",
+                          "text-card-foreground shadow-sm",
                         ].join(" ")
                   }`}
                 >
@@ -716,9 +725,9 @@ export function ChatPanel({
       </div>
 
       {showNewMessagesButton ? (
-        <div className="pointer-events-none absolute bottom-28 left-0 right-0 flex justify-center">
+        <div className="pointer-events-none absolute bottom-28 left-0 right-0 flex justify-center animate-slide-in-up">
           <Button
-            className="pointer-events-auto shadow-sm"
+            className="pointer-events-auto shadow-lg bg-linear-to-br from-primary to-primary/90 hover:shadow-xl hover:scale-105 transition-all duration-200"
             size="sm"
             onClick={() => scrollToBottom()}
           >
@@ -787,13 +796,13 @@ export function ChatPanel({
 
         <div
           ref={composerRef}
-          className="flex items-end gap-2 rounded-2xl border border-border/70 bg-background p-2 shadow-sm"
+          className="flex items-end gap-2 rounded-2xl border border-border/60 bg-card/95 backdrop-blur-sm p-2.5 shadow-lg transition-all focus-within:border-primary/40 focus-within:shadow-xl focus-within:shadow-primary/10"
         >
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5">
             <button
               type="button"
               onClick={() => setIsEmojiPickerOpen((value) => !value)}
-              className="rounded-full p-2 text-muted-foreground transition hover:bg-muted/70"
+              className="rounded-full p-2 text-muted-foreground transition-all hover:bg-primary/10 hover:text-primary hover:scale-110 active:scale-95"
               aria-label="Open emoji picker"
             >
               <Smile className="h-4 w-4" />
@@ -802,7 +811,7 @@ export function ChatPanel({
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="rounded-full p-2 text-muted-foreground transition hover:bg-muted/70"
+              className="rounded-full p-2 text-muted-foreground transition-all hover:bg-primary/10 hover:text-primary hover:scale-110 active:scale-95"
               aria-label="Attach file"
             >
               <Paperclip className="h-4 w-4" />
@@ -811,7 +820,7 @@ export function ChatPanel({
             <button
               type="button"
               onClick={handleCameraClick}
-              className="rounded-full p-2 text-muted-foreground transition hover:bg-muted/70"
+              className="rounded-full p-2 text-muted-foreground transition-all hover:bg-primary/10 hover:text-primary hover:scale-110 active:scale-95"
               aria-label="Attach photo"
             >
               <Camera className="h-4 w-4" />
@@ -821,7 +830,7 @@ export function ChatPanel({
               type="button"
               onClick={() => void startRecording()}
               disabled={isRecording}
-              className="rounded-full p-2 text-muted-foreground transition hover:bg-muted/70 disabled:opacity-50"
+              className="rounded-full p-2 text-muted-foreground transition-all hover:bg-primary/10 hover:text-primary hover:scale-110 active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
               aria-label="Record voice message"
             >
               <Mic className="h-4 w-4" />
@@ -840,12 +849,12 @@ export function ChatPanel({
               }
             }}
             disabled={isUploading || isRecording}
-            className="max-h-36 min-h-11 resize-none border-0 bg-transparent shadow-none focus-visible:ring-0"
+            className="max-h-36 min-h-11 resize-none border-0 bg-transparent shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/60"
           />
           <Button
             onClick={() => void handleSend()}
             aria-label="Send message"
-            className="h-10 rounded-full px-3"
+            className="h-10 rounded-full px-4 bg-linear-to-br from-primary to-primary/90 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 transition-all duration-200"
             disabled={isUploading || isRecording}
           >
             <CornerDownLeft className="h-4 w-4" />

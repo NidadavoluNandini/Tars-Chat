@@ -25,43 +25,44 @@ export function UserSearchList({
   const hasSearch = Boolean(search.trim());
 
   return (
-    <section className="space-y-3 border-b border-border/60 bg-card px-3 py-3">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+    <section className="space-y-3 border-b border-border/60 bg-linear-to-b from-card to-muted/10 px-3 py-3.5">
+      <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground/80">
         Start New Chat
       </p>
 
       <div className="relative">
-        <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+        <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted-foreground/60" />
         <Input
           value={search}
           onChange={(event) => onSearchChange(event.target.value)}
           placeholder="Search users or chats"
-          className="rounded-full border-border/70 bg-background pl-9"
+          className="rounded-full border-border/60 bg-background/80 backdrop-blur-sm pl-10 transition-all focus:border-primary/40 focus:shadow-md focus:shadow-primary/5"
         />
       </div>
 
-      <div className="max-h-44 space-y-1 overflow-y-auto rounded-xl border border-border/70 bg-background p-1">
+      <div className="max-h-44 space-y-1 overflow-y-auto rounded-xl border border-border/60 bg-background/80 backdrop-blur-sm p-1.5 shadow-sm">
         {users.map((user) => (
           <Button
             key={user._id}
             variant="ghost"
-            className="h-auto w-full justify-start gap-2 rounded-lg border border-transparent px-2.5 py-2 hover:border-border hover:bg-muted/50"
+            className="h-auto w-full justify-start gap-3 rounded-lg border border-transparent px-2.5 py-2 transition-all hover:border-border/50 hover:bg-muted/60 hover:scale-[1.02] active:scale-100"
             onClick={() => onUserSelect(user._id)}
           >
             <div className="relative">
-              <Avatar className="h-8 w-8">
+              <Avatar className="h-9 w-9 ring-2 ring-border/40 transition-all">
                 <AvatarImage src={user.image} alt={user.name} />
-                <AvatarFallback>{user.name.slice(0, 1).toUpperCase()}</AvatarFallback>
+                <AvatarFallback className="bg-linear-to-br from-primary/20 to-primary/10">{user.name.slice(0, 1).toUpperCase()}</AvatarFallback>
               </Avatar>
               <span
-                className={`absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border border-card ${
-                  user.isOnline ? "bg-emerald-500" : "bg-muted-foreground/40"
+                className={`absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-background shadow-sm ${
+                  user.isOnline ? "bg-emerald-500 animate-pulse" : "bg-muted-foreground/40"
                 }`}
               />
             </div>
             <div className="flex-1 text-left">
-              <p className="text-sm font-medium">{user.name}</p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm font-semibold">{user.name}</p>
+              <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                <span className={`h-1.5 w-1.5 rounded-full ${user.isOnline ? "bg-emerald-500" : "bg-gray-400"}`} />
                 {user.isOnline ? "Online" : "Offline"}
               </p>
             </div>
