@@ -6,9 +6,11 @@ import {
   ArrowLeft,
   Camera,
   CornerDownLeft,
+  Mic,
   Paperclip,
   Plus,
   Smile,
+  Square,
   Trash2,
   X,
 } from "lucide-react";
@@ -77,12 +79,17 @@ export function ChatPanel({
   const [isUploading, setIsUploading] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const imageInputRef = useRef<HTMLInputElement | null>(null);
   const composerRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const cameraVideoRef = useRef<HTMLVideoElement | null>(null);
   const cameraStreamRef = useRef<MediaStream | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const recordingIntervalRef = useRef<number | null>(null);
 
   const composerEmojis = [
     "😀",
@@ -275,6 +282,69 @@ export function ChatPanel({
     );
   };
 
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        const audioFile = new File(
+          [audioBlob],
+          `voice-${Date.now()}.webm`,
+          { type: "audio/webm" }
+        );
+        setPendingFiles((current) => [...current, audioFile]);
+        
+        stream.getTracks().forEach((track) => track.stop());
+        if (recordingIntervalRef.current) {
+          window.clearInterval(recordingIntervalRef.current);
+          recordingIntervalRef.current = null;
+        }
+        setRecordingTime(0);
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+      setRecordingTime(0);
+
+      recordingIntervalRef.current = window.setInterval(() => {
+        setRecordingTime((prev) => prev + 1);
+      }, 1000);
+    } catch (error) {
+      setSendError("Microphone access denied. Please allow permission.");
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
+
+  const cancelRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      audioChunksRef.current = [];
+      
+      if (recordingIntervalRef.current) {
+        window.clearInterval(recordingIntervalRef.current);
+        recordingIntervalRef.current = null;
+      }
+      setRecordingTime(0);
+    }
+  };
+
   const uploadFile = async (file: File) => {
     const uploadUrl = await generateUploadUrl({});
     const response = await fetch(uploadUrl, {
@@ -369,6 +439,12 @@ export function ChatPanel({
   useEffect(() => {
     return () => {
       stopCameraStream();
+      if (recordingIntervalRef.current) {
+        window.clearInterval(recordingIntervalRef.current);
+      }
+      if (mediaRecorderRef.current && isRecording) {
+        mediaRecorderRef.current.stop();
+      }
     };
   }, []);
 
@@ -423,13 +499,24 @@ export function ChatPanel({
 
         <div>
           <p className="text-sm font-semibold">{title}</p>
-          <p className="text-xs text-muted-foreground">
-            {conversation.isGroup
-              ? `${conversation.groupOnlineCount}/${conversation.groupMembers.length} online`
-              : conversation.otherMember?.isOnline
-                ? "Online"
-                : "Offline"}
-          </p>
+          <div className="flex flex-col">
+            <p className="text-xs text-muted-foreground">
+              {conversation.isGroup
+                ? `${conversation.groupOnlineCount}/${conversation.groupMembers.length} online`
+                : conversation.otherMember?.isOnline
+                  ? "Online"
+                  : "Offline"}
+            </p>
+            {typingUsers && typingUsers.length > 0 ? (
+              <p className="text-xs italic text-primary">
+                {conversation.isGroup
+                  ? typingUsers.length === 1
+                    ? `${typingUsers[0]} is typing...`
+                    : `${typingUsers.length} people are typing...`
+                  : "typing..."}
+              </p>
+            ) : null}
+          </div>
         </div>
       </header>
 
@@ -489,6 +576,17 @@ export function ChatPanel({
                             alt={message.fileName ?? "Attachment"}
                             className="mb-2 max-h-64 rounded-lg border object-cover"
                           />
+                        ) : message.fileType?.startsWith("audio/") ? (
+                          <div className="mb-2 rounded-lg border bg-background/70 p-2">
+                            <audio
+                              controls
+                              src={message.fileUrl}
+                              className="w-full max-w-xs"
+                              preload="metadata"
+                            >
+                              Your browser does not support audio playback.
+                            </audio>
+                          </div>
                         ) : (
                           <a
                             href={message.fileUrl}
@@ -718,6 +816,16 @@ export function ChatPanel({
             >
               <Camera className="h-4 w-4" />
             </button>
+
+            <button
+              type="button"
+              onClick={() => void startRecording()}
+              disabled={isRecording}
+              className="rounded-full p-2 text-muted-foreground transition hover:bg-muted/70 disabled:opacity-50"
+              aria-label="Record voice message"
+            >
+              <Mic className="h-4 w-4" />
+            </button>
           </div>
 
           <Textarea
@@ -731,18 +839,49 @@ export function ChatPanel({
                 void handleSend();
               }
             }}
-            disabled={isUploading}
+            disabled={isUploading || isRecording}
             className="max-h-36 min-h-11 resize-none border-0 bg-transparent shadow-none focus-visible:ring-0"
           />
           <Button
             onClick={() => void handleSend()}
             aria-label="Send message"
             className="h-10 rounded-full px-3"
-            disabled={isUploading}
+            disabled={isUploading || isRecording}
           >
             <CornerDownLeft className="h-4 w-4" />
           </Button>
         </div>
+
+        {isRecording ? (
+          <div className="mt-2 flex items-center justify-between rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 shadow-sm">
+            <div className="flex items-center gap-2">
+              <div className="h-3 w-3 animate-pulse rounded-full bg-destructive" />
+              <span className="text-sm font-medium text-destructive">
+                Recording {Math.floor(recordingTime / 60)}:{String(recordingTime % 60).padStart(2, "0")}
+              </span>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={cancelRecording}
+                className="text-xs"
+              >
+                <X className="mr-1 h-3 w-3" />
+                Cancel
+              </Button>
+              <Button
+                variant="default"
+                size="sm"
+                onClick={stopRecording}
+                className="text-xs"
+              >
+                <Square className="mr-1 h-3 w-3" />
+                Stop
+              </Button>
+            </div>
+          </div>
+        ) : null}
 
         {isEmojiPickerOpen ? (
           <div className="mt-2 flex flex-wrap gap-2 rounded-xl border border-border/70 bg-card p-2 shadow-sm">
